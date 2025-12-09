@@ -9,29 +9,38 @@
     font-family: "Segoe UI", Arial, sans-serif;
   
     /* DEFAULT: DARK ELECTRIC BACKGROUND (radial with red hue) */
-    background: radial-gradient(circle at 10% 20%, 
-        #1b2735 0%, 
-        #090a0f 35%, 
-        #200122 70%, 
-        #6f0000 100%);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-size: cover;
+    background: linear-gradient(90deg,
+      #6f0000 0%,      /* red left edge */
+      #200122 15%,     /* purple-dark transition */
+      #090a0f 40%,     /* BLACK CENTER begins */
+      #000000 50%,     /* absolute center black */
+      #090a0f 60%,     /* transition back out */
+      #200122 85%,     /* purple-dark */
+      #6f0000 100%     /* red right edge */
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
   }
   
   /* MOBILE: same colors in vertical layout so they show on tall screens */
   @media (max-width: 600px) {
     body {
-      background-attachment: scroll;
       background: linear-gradient(180deg,
-        #1b2735 0%,
-        #090a0f 35%,
-        #200122 70%,
-        #6f0000 100%);
+        #6f0000 0%,      /* 🔺 RED at the top */
+        #200122 18%,     /* deep purple transition */
+        #090a0f 40%,     /* very dark */
+        #000000 50%,     /* ⚫ BLACK middle */
+        #090a0f 60%,     /* very dark again */
+        #200122 82%,     /* purple transition */
+        #6f0000 100%     /* 🔻 RED at the bottom */
+      );
       background-repeat: no-repeat;
       background-size: cover;
+      background-attachment: scroll;
     }
   }
+  
   
   
   /* ============================================================
@@ -132,6 +141,32 @@
     margin-top: 1rem;
     text-shadow: 0 0 8px rgba(255,215,0,0.7);
   }
+  @media (max-width: 600px) {
+    .strongs-modal {
+      background: linear-gradient(180deg,
+        #6f0000 0%, 
+        #200122 18%,
+        #090a0f 40%,
+        #000000 50%,
+        #090a0f 60%,
+        #200122 82%,
+        #6f0000 100%
+      ) !important;
+    }
+  }
+
+  .strongs-modal {
+    background: linear-gradient(90deg,
+        #6f0000 0%, 
+        #200122 15%,
+        #090a0f 40%,
+        #000000 50%,
+        #090a0f 60%,
+        #200122 85%,
+        #6f0000 100%
+    ) !important;
+  }
+  
   
   
   /* ============================================================
