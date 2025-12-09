@@ -5,8 +5,7 @@ let strongsJsonLoaded = false;
 let strongsXml = null;
 let strongsXmlLoaded = false;
 
-// ===== Your Jude + Strong's source text =====
-// Every "wordG####" here becomes a clickable <span class="word" data-strongs="G####">word</span>
+// ===== Jude + Strong's source text =====
 const judeRaw = `
 Jud 1:1  Jude,G2455 the servantG1401 of JesusG2424 Christ,G5547 andG1161 brotherG80 of James,G2385 to them that are sanctifiedG37 byG1722 GodG2316 the Father,G3962 andG2532 preservedG5083 in JesusG2424 Christ,G5547 and called:G2822 
 Jud 1:2  MercyG1656 unto you,G5213 andG2532 peace,G1515 andG2532 love,G26 be multiplied.G4129 
@@ -38,7 +37,7 @@ Jud 1:24  NowG1161 unto him that is ableG1410 to keepG5442 youG5209 from falling
 Jud 1:25  To the onlyG3441 wiseG4680 GodG2316 ourG2257 Saviour,G4990 be gloryG1391 andG2532 majesty,G3172 dominionG2904 andG2532 power,G1849 bothG5037 nowG3568 andG2532 ever.G1519 G3956 G165 Amen.G281 
 `;
 
-// ===== Parse Jude text into verse objects =====
+// ===== Utility: parse Jude into verse objects =====
 function parseJudeVerses() {
   const verses = [];
 
@@ -51,8 +50,8 @@ function parseJudeVerses() {
     const parts = line.split(/\s+/);
     if (parts.length < 3) return;
 
-    const book = parts[0];         // "Jud"
-    const chapVers = parts[1];     // "1:1"
+    const book = parts[0];        // "Jud"
+    const chapVers = parts[1];    // "1:1"
     const restIndex = line.indexOf(chapVers) + chapVers.length;
     const verseText = line.slice(restIndex).trim();
 
@@ -73,18 +72,18 @@ function renderJudeParagraphs() {
 
   const verses = parseJudeVerses();
 
-  // Paragraph layout (you can tweak these ranges if you want)
+  // Paragraph ranges
   const paragraphRanges = [
     { start: 1, end: 2 },    // Greeting
     { start: 3, end: 4 },    // Call to contend
-    { start: 5, end: 16 },   // Warnings about false teachers
-    { start: 17, end: 23 },  // Exhortations to the believers
+    { start: 5, end: 16 },   // Warnings
+    { start: 17, end: 23 },  // Exhortations
     { start: 24, end: 25 }   // Doxology
   ];
 
   paragraphRanges.forEach(range => {
     const p = document.createElement('p');
-    p.className = 'paragraph w3-justify';
+    p.className = 'paragraph';
 
     const versesInRange = verses.filter(
       v => v.chapter === 1 && v.verse >= range.start && v.verse <= range.end
@@ -100,11 +99,10 @@ function renderJudeParagraphs() {
     container.appendChild(p);
   });
 
-  // Attach click handlers after building DOM
   attachWordHandlers();
 }
 
-// Append a single verse into a paragraph <p>
+// Append one verse into a paragraph element
 function appendVerseToParagraph(p, verseObj) {
   const vn = document.createElement('span');
   vn.className = 'verse-num';
@@ -125,7 +123,7 @@ function appendVerseToParagraph(p, verseObj) {
       let pre = tok.slice(0, match.index);
       let post = tok.slice(match.index + match[0].length);
 
-      // Remove parentheses around tokens like I(G1161) or should(G3754)
+      // Remove parentheses around tokens like I(G1161)
       pre = pre.replace(/[()]/g, '');
       post = post.replace(/[()]/g, '');
 
@@ -141,7 +139,6 @@ function appendVerseToParagraph(p, verseObj) {
         }
       }
     } else {
-      // plain word without Strong's number
       p.appendChild(document.createTextNode(tok));
     }
   });
@@ -150,30 +147,24 @@ function appendVerseToParagraph(p, verseObj) {
 // ===== Strong's JSON Loader =====
 function loadStrongsJson() {
   fetch('./strongs-greek.json')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Unable to load strongs-greek.json');
-      }
-      return response.json();
+    .then(res => {
+      if (!res.ok) throw new Error('Unable to load strongs-greek.json');
+      return res.json();
     })
     .then(data => {
       strongsJson = data;
       strongsJsonLoaded = true;
       console.log("Strong's Greek JSON loaded:", Object.keys(strongsJson).length, 'entries');
     })
-    .catch(err => {
-      console.warn('JSON load error:', err.message);
-    });
+    .catch(err => console.warn('JSON load error:', err.message));
 }
 
 // ===== Strong's XML Loader =====
 function loadStrongsXml() {
   fetch('./strongsgreek.xml')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Unable to load strongsgreek.xml');
-      }
-      return response.text();
+    .then(res => {
+      if (!res.ok) throw new Error('Unable to load strongsgreek.xml');
+      return res.text();
     })
     .then(text => {
       const parser = new DOMParser();
@@ -181,44 +172,42 @@ function loadStrongsXml() {
       strongsXmlLoaded = true;
       console.log("Strong's Greek XML loaded");
     })
-    .catch(err => {
-      console.warn('XML load error:', err.message);
-    });
+    .catch(err => console.warn('XML load error:', err.message));
 }
 
-// ===== Click Handlers for Strong's words =====
+// ===== Attach click handlers to Strong's words =====
 function attachWordHandlers() {
   const words = document.querySelectorAll('.word[data-strongs]');
   words.forEach(word => {
     if (!word.dataset.hasListener) {
       word.addEventListener('click', () => {
         const code = word.getAttribute('data-strongs');
-        openStrongsModal(code);
+        const clickedWord = word.textContent || '';
+        openStrongsModal(code, clickedWord);
       });
       word.dataset.hasListener = 'true';
     }
   });
 }
 
-// ===== Find entry in XML using padded numeric Strong's =====
+// ===== Find entry in XML using Strong's code =====
 function findXmlEntry(code) {
   if (!strongsXml || !strongsXmlLoaded) return null;
   if (!code) return null;
 
   const num = code.replace(/^[GH]/i, '');
-  const padded = num.padStart(5, '0'); // e.g. "2455" -> "02455"
-
+  const padded = num.padStart(5, '0');
   return strongsXml.querySelector('entry[strongs="' + padded + '"]');
 }
 
 // ===== Open Strong's Modal =====
-function openStrongsModal(code) {
+function openStrongsModal(code, clickedWord) {
   let lemma = '';
   let translit = '';
   let strongsDef = '';
   let kjvDef = '';
 
-  // Try JSON first
+  // JSON first
   if (strongsJsonLoaded && strongsJson[code]) {
     const entryJson = strongsJson[code];
     lemma = entryJson.lemma || lemma;
@@ -233,7 +222,7 @@ function openStrongsModal(code) {
     }
   }
 
-  // Fallback / supplement from XML
+  // XML supplement
   const xmlEntry = findXmlEntry(code);
   if (xmlEntry) {
     const greekNode = xmlEntry.querySelector('greek');
@@ -257,26 +246,38 @@ function openStrongsModal(code) {
     if (pronNode) {
       const pron = pronNode.getAttribute('strongs');
       if (pron) {
-        translit = translit ? translit + ' (' + pron + ')' : pron;
+        translit = translit ? `${translit} (${pron})` : pron;
       }
     }
   }
 
+  const header = document.getElementById('strongsHeader');
+  const lemmaEl = document.getElementById('strongsLemma');
+  const translitEl = document.getElementById('strongsTranslit');
+  const codeEl = document.getElementById('strongsCode');
+  const defEl = document.getElementById('strongsDef');
+  const kjvEl = document.getElementById('strongsKJV');
+
+  const displayWord = (clickedWord || '').trim();
+
   if (!lemma && !translit && !strongsDef && !kjvDef) {
-    document.getElementById('strongsHeader').textContent = "Strong's " + code + " (not found)";
-    document.getElementById('strongsLemma').textContent = '';
-    document.getElementById('strongsTranslit').textContent = '';
-    document.getElementById('strongsCode').textContent = code;
-    document.getElementById('strongsDef').textContent =
-      'No entry found in strongs-greek.json or strongsgreek.xml for this number.';
-    document.getElementById('strongsKJV').textContent = '';
+    header.textContent = displayWord
+      ? `${displayWord} – Strong's ${code} (not found)`
+      : `Strong's ${code} (not found)`;
+    lemmaEl.textContent = '';
+    translitEl.textContent = '';
+    codeEl.textContent = code;
+    defEl.textContent = 'No entry found in strongs-greek.json or strongsgreek.xml for this number.';
+    kjvEl.textContent = '';
   } else {
-    document.getElementById('strongsHeader').textContent = "Strong's " + code;
-    document.getElementById('strongsLemma').textContent = lemma;
-    document.getElementById('strongsTranslit').textContent = translit;
-    document.getElementById('strongsCode').textContent = code;
-    document.getElementById('strongsDef').textContent = strongsDef;
-    document.getElementById('strongsKJV').textContent = kjvDef;
+    header.textContent = displayWord
+      ? `${displayWord} – Strong's ${code}`
+      : `Strong's ${code}`;
+    lemmaEl.textContent = lemma;
+    translitEl.textContent = translit;
+    codeEl.textContent = code;
+    defEl.textContent = strongsDef;
+    kjvEl.textContent = kjvDef;
   }
 
   document.getElementById('strongsModal').style.display = 'block';
@@ -289,13 +290,16 @@ function closeStrongsModal(event) {
   }
 }
 
-// ===== Theme toggle (light / dark) =====
+// ===== Theme toggle (dark <-> light) =====
 function toggleTheme() {
   document.body.classList.toggle('light-mode');
 }
 
 // ===== Bootstrapping =====
 document.addEventListener('DOMContentLoaded', () => {
+  // Force DARK mode by default on every load
+  document.body.classList.remove('light-mode');
+
   renderJudeParagraphs();
   loadStrongsJson();
   loadStrongsXml();
