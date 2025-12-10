@@ -52,10 +52,13 @@
     background: rgba(0, 0, 0, 0.50);
   }
   
-  .paragraph {
-    margin-bottom: 1.4rem;
-    text-align: justify;
-  }
+.paragraph {
+  margin-bottom: 1.6rem;
+  text-align: justify;
+  font-size: 1.15rem;   /* ~18.4px text size */
+  line-height: 1.75;    /* more breathable spacing */
+}
+
   
   /* Verse numbers */
   .verse-num {
@@ -237,3 +240,4 @@
     text-shadow: none;
   }
   
+
